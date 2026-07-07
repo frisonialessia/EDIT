@@ -1,0 +1,23 @@
+{
+  "name": "@edit-os/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dominio, tipos y lógica de negocio compartida — fuente de verdad del sistema",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "typecheck": "tsc -b"
+  }
+}

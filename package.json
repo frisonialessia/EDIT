@@ -1,0 +1,23 @@
+{
+  "name": "edit-os",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sistema operativo de orquestación para eventos de ultra-lujo — EDIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "typecheck": "tsc -b",
+    "test": "pnpm --filter @edit-os/services test",
+    "dev:api": "pnpm --filter @edit-os/api dev",
+    "dev:web": "pnpm --filter @edit-os/web dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.15.9"
+}
