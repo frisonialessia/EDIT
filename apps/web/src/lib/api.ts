@@ -1,5 +1,8 @@
 import type { Event, Message, MessageThread, ProfileState } from '@edit-os/core';
+import { demoStore } from './demo-store';
 
+/** Sin VITE_API_URL usamos demo embebido — Vercel funciona sin backend. */
+const USE_DEMO = !import.meta.env.VITE_API_URL;
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 
 interface ApiErrorBody {
@@ -28,76 +31,115 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return body as T;
 }
 
+async function withDemoFallback<T>(fetcher: () => Promise<T>, fallback: () => T): Promise<T> {
+  if (USE_DEMO) {
+    return fallback();
+  }
+
+  try {
+    return await fetcher();
+  } catch {
+    return fallback();
+  }
+}
+
 export async function fetchEvent(eventId: string): Promise<Event> {
-  const response = await fetch(`${API_BASE}/events/${eventId}`);
-  return parseResponse<Event>(response);
+  return withDemoFallback(
+    async () => parseResponse<Event>(await fetch(`${API_BASE}/events/${eventId}`)),
+    () => demoStore.getEvent(),
+  );
 }
 
 export async function assignVendorToEvent(
   eventId: string,
   vendorId: string,
 ): Promise<Event> {
-  const response = await fetch(`${API_BASE}/events/${eventId}/assign-vendor`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ vendorId }),
-  });
-
-  return parseResponse<Event>(response);
+  return withDemoFallback(
+    async () =>
+      parseResponse<Event>(
+        await fetch(`${API_BASE}/events/${eventId}/assign-vendor`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vendorId }),
+        }),
+      ),
+    () => demoStore.getEvent(),
+  );
 }
 
 export async function evaluateEvent(eventId: string): Promise<Event> {
-  const response = await fetch(`${API_BASE}/events/${eventId}/evaluate`, {
-    method: 'POST',
-  });
-
-  return parseResponse<Event>(response);
+  return withDemoFallback(
+    async () =>
+      parseResponse<Event>(
+        await fetch(`${API_BASE}/events/${eventId}/evaluate`, { method: 'POST' }),
+      ),
+    () => demoStore.evaluateEvent(),
+  );
 }
 
 export async function approveProposal(eventId: string, proposalId: string): Promise<Event> {
-  const response = await fetch(
-    `${API_BASE}/events/${eventId}/proposals/${proposalId}/approve`,
-    { method: 'POST' },
+  return withDemoFallback(
+    async () =>
+      parseResponse<Event>(
+        await fetch(`${API_BASE}/events/${eventId}/proposals/${proposalId}/approve`, {
+          method: 'POST',
+        }),
+      ),
+    () => demoStore.approveProposal(proposalId),
   );
-
-  return parseResponse<Event>(response);
 }
 
 export async function rejectProposal(eventId: string, proposalId: string): Promise<Event> {
-  const response = await fetch(
-    `${API_BASE}/events/${eventId}/proposals/${proposalId}/reject`,
-    { method: 'POST' },
+  return withDemoFallback(
+    async () =>
+      parseResponse<Event>(
+        await fetch(`${API_BASE}/events/${eventId}/proposals/${proposalId}/reject`, {
+          method: 'POST',
+        }),
+      ),
+    () => demoStore.rejectProposal(proposalId),
   );
-
-  return parseResponse<Event>(response);
 }
 
 export async function fetchProfile(): Promise<ProfileState> {
-  const response = await fetch(`${API_BASE}/profile`);
-  return parseResponse<ProfileState>(response);
+  return withDemoFallback(
+    async () => parseResponse<ProfileState>(await fetch(`${API_BASE}/profile`)),
+    () => demoStore.getProfile(),
+  );
 }
 
 export async function updateProfile(partial: Partial<ProfileState>): Promise<ProfileState> {
-  const response = await fetch(`${API_BASE}/profile`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(partial),
-  });
-
-  return parseResponse<ProfileState>(response);
+  return withDemoFallback(
+    async () =>
+      parseResponse<ProfileState>(
+        await fetch(`${API_BASE}/profile`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(partial),
+        }),
+      ),
+    () => demoStore.updateProfile(partial),
+  );
 }
 
 export async function fetchMessageThreads(eventId: string): Promise<MessageThread[]> {
-  const response = await fetch(`${API_BASE}/messages/${eventId}/threads`);
-  return parseResponse<MessageThread[]>(response);
+  return withDemoFallback(
+    async () => parseResponse<MessageThread[]>(await fetch(`${API_BASE}/messages/${eventId}/threads`)),
+    () => demoStore.getThreads(),
+  );
 }
 
 export async function fetchThreadMessages(
   eventId: string,
   threadId: string,
 ): Promise<Message[]> {
-  const response = await fetch(`${API_BASE}/messages/${eventId}/threads/${threadId}`);
-  return parseResponse<Message[]>(response);
+  return withDemoFallback(
+    async () =>
+      parseResponse<Message[]>(
+        await fetch(`${API_BASE}/messages/${eventId}/threads/${threadId}`),
+      ),
+    () => demoStore.getMessages(threadId),
+  );
 }
 
 export async function sendMessage(
@@ -105,11 +147,15 @@ export async function sendMessage(
   threadId: string,
   body: string,
 ): Promise<Message> {
-  const response = await fetch(`${API_BASE}/messages/${eventId}/threads/${threadId}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body }),
-  });
-
-  return parseResponse<Message>(response);
+  return withDemoFallback(
+    async () =>
+      parseResponse<Message>(
+        await fetch(`${API_BASE}/messages/${eventId}/threads/${threadId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body }),
+        }),
+      ),
+    () => demoStore.sendMessage(threadId, body),
+  );
 }

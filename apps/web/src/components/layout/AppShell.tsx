@@ -1,3 +1,4 @@
+import type { LucideIcon } from 'lucide-react';
 import {
   CalendarDays,
   Clock3,
@@ -17,14 +18,22 @@ interface AppShellProps {
   onToggleTheme: () => void;
 }
 
-const navItems = [
+interface NavItem {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  end?: boolean;
+  badge?: number;
+}
+
+const navItems: NavItem[] = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/dashboard/calendar', label: 'Calendar', icon: CalendarDays },
   { to: '/dashboard/timeline', label: 'Timeline', icon: Clock3 },
   { to: '/dashboard/orchestration', label: 'Orchestration', icon: Zap },
   { to: '/dashboard/messages', label: 'Messages', icon: MessageSquare, badge: 2 },
   { to: '/profile', label: 'Profile', icon: User },
-] as const;
+];
 
 export function AppShell({ isDark, onToggleTheme }: AppShellProps): React.JSX.Element {
   const location = useLocation();
