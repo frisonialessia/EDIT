@@ -1,4 +1,4 @@
-import type { EventId, EventStatus, VendorId } from '@edit-os/core';
+import type { EventId, EventStatus, VendorId, WorkflowProposalId } from '@edit-os/core';
 
 export class EventNotFoundError extends Error {
   constructor(readonly eventId: EventId) {
@@ -31,5 +31,17 @@ export class VendorAlreadyAssignedError extends Error {
   ) {
     super(`Vendor ${vendorId as string} is already assigned to event ${eventId as string}`);
     this.name = 'VendorAlreadyAssignedError';
+  }
+}
+
+export class WorkflowProposalNotFoundError extends Error {
+  constructor(
+    readonly eventId: EventId,
+    readonly proposalId: WorkflowProposalId,
+  ) {
+    super(
+      `Workflow proposal ${proposalId as string} not found for event ${eventId as string}`,
+    );
+    this.name = 'WorkflowProposalNotFoundError';
   }
 }

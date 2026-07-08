@@ -1,7 +1,10 @@
 import type { Event, EventStatus, Vendor, VendorCategory } from '@edit-os/core';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
+import { EventTimeline } from '@/components/orchestration/EventTimeline';
+import { RiskMonitor } from '@/components/orchestration/RiskMonitor';
+import { WorkflowProposalPanel } from '@/components/orchestration/WorkflowProposalPanel';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,11 +19,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
-import { ApiError, assignVendorToEvent, fetchEvent } from '@/lib/api';
+import {
+  ApiError,
+  approveProposal,
+  assignVendorToEvent,
+  evaluateEvent,
+  fetchEvent,
+  rejectProposal,
+} from '@/lib/api';
 import { getAvatarGradient, getInitials } from '@/lib/avatar';
 import { cn } from '@/lib/utils';
 
 const DEMO_EVENT_ID = 'event-1';
+
+type DashboardTab = 'overview' | 'orchestration';
 
 const statusLabels: Record<EventStatus, string> = {
   draft: 'Draft',
@@ -150,6 +162,9 @@ export function EventDashboard({
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAssignOpen, setIsAssignOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<DashboardTab>('orchestration');
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [isProposalProcessing, setIsProposalProcessing] = useState(false);
 
   const loadEvent = useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -192,6 +207,63 @@ export function EventDashboard({
     }
   }
 
+  async function handleEvaluate(): Promise<void> {
+    setIsEvaluating(true);
+
+    try {
+      const updated = await evaluateEvent(eventId);
+      setEvent(updated);
+      toast({
+        variant: 'success',
+        title: 'Sensores actualizados',
+        description: 'El sistema recalculó variables de riesgo y propuestas.',
+      });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Unable to evaluate event';
+      toast({ variant: 'error', title: 'Evaluación fallida', description: message });
+    } finally {
+      setIsEvaluating(false);
+    }
+  }
+
+  async function handleApproveProposal(proposalId: string): Promise<void> {
+    setIsProposalProcessing(true);
+
+    try {
+      const updated = await approveProposal(eventId, proposalId);
+      setEvent(updated);
+      toast({
+        variant: 'success',
+        title: 'Plan B activado',
+        description: 'Timeline y workflows actualizados automáticamente.',
+      });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Unable to approve proposal';
+      toast({ variant: 'error', title: 'Aprobación fallida', description: message });
+    } finally {
+      setIsProposalProcessing(false);
+    }
+  }
+
+  async function handleRejectProposal(proposalId: string): Promise<void> {
+    setIsProposalProcessing(true);
+
+    try {
+      const updated = await rejectProposal(eventId, proposalId);
+      setEvent(updated);
+      toast({
+        variant: 'success',
+        title: 'Plan A mantenido',
+        description: 'La propuesta fue descartada.',
+      });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Unable to reject proposal';
+      toast({ variant: 'error', title: 'Operación fallida', description: message });
+    } finally {
+      setIsProposalProcessing(false);
+    }
+  }
+
   return (
     <AppShell isDark={isDark} onToggleTheme={onToggleTheme}>
       <div className="min-h-screen bg-[#FCFCFC] dark:bg-neutral-950">
@@ -220,11 +292,31 @@ export function EventDashboard({
                   </h1>
                   <p className="mt-3 text-[13px] font-normal text-neutral-500 dark:text-neutral-400">
                     Operational control · {eventId}
-                    {event ? ` · ${event.date}` : ''}
+                    {event ? ` · ${event.date} · ${event.location}` : ''}
                   </p>
                 </>
               )}
             </div>
+
+            <div className="flex shrink-0 items-center gap-3">
+              <Button
+                variant="outline"
+                disabled={isLoading || isEvaluating}
+                onClick={() => void handleEvaluate()}
+                className="shadow-none"
+              >
+                {isEvaluating ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Evaluando…
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Re-evaluar sensores
+                  </>
+                )}
+              </Button>
 
             <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
               <DialogTrigger asChild>
@@ -276,9 +368,72 @@ export function EventDashboard({
                 </form>
               </DialogContent>
             </Dialog>
+              </DialogContent>
+            </Dialog>
+            </div>
           </div>
 
           {event ? (
+            <>
+              <nav className="mb-12 flex gap-1 border-b border-neutral-200/70 dark:border-neutral-800/70">
+                {(
+                  [
+                    ['orchestration', 'Orquestación'],
+                    ['overview', 'Overview'],
+                  ] as const
+                ).map(([tab, label]) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={cn(
+                      '-mb-px border-b-2 px-4 py-3 text-[13px] font-medium transition-colors',
+                      activeTab === tab
+                        ? 'border-neutral-900 text-neutral-900 dark:border-neutral-100 dark:text-neutral-100'
+                        : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-300',
+                    )}
+                  >
+                    {label}
+                    {tab === 'orchestration' && event.pendingProposals.length > 0 ? (
+                      <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                        {event.pendingProposals.length}
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </nav>
+
+              {activeTab === 'orchestration' ? (
+                <div className="space-y-20">
+                  <section>
+                    <SectionLabel>Propuestas pendientes · efecto dominó</SectionLabel>
+                    <WorkflowProposalPanel
+                      proposals={event.pendingProposals}
+                      contingencyPlans={event.contingencyPlans}
+                      activePlan={event.activePlan}
+                      isProcessing={isProposalProcessing}
+                      onApprove={(id) => void handleApproveProposal(id)}
+                      onReject={(id) => void handleRejectProposal(id)}
+                    />
+                  </section>
+
+                  <section>
+                    <SectionLabel>Timeline operativa</SectionLabel>
+                    <div className="rounded-xl border border-neutral-200/70 bg-white px-8 py-8 dark:border-neutral-800/70 dark:bg-neutral-950">
+                      <EventTimeline
+                        timeline={event.timeline}
+                        activePlan={event.activePlan}
+                        contingencyPlans={event.contingencyPlans}
+                      />
+                    </div>
+                  </section>
+
+                  <section>
+                    <SectionLabel>Variables de riesgo · sensores activos</SectionLabel>
+                    <RiskMonitor signals={event.riskProfile.signals} />
+                  </section>
+                </div>
+              ) : (
             <div className="grid grid-cols-12 gap-16">
               <section className="col-span-12 lg:col-span-8">
                 <SectionLabel>Event details</SectionLabel>
@@ -293,6 +448,12 @@ export function EventDashboard({
                     }
                   />
                   <DataGridRow label="Date" value={event.date} />
+                  <DataGridRow label="Location" value={event.location} />
+                  <DataGridRow
+                    label="Venue type"
+                    value={event.isOutdoor ? 'Outdoor' : 'Indoor'}
+                  />
+                  <DataGridRow label="Active plan" value={`Plan ${event.activePlan}`} />
                   <DataGridRow label="Status" value={<StatusBadge status={event.status} />} />
                   <DataGridRow
                     label="Client"
@@ -357,6 +518,8 @@ export function EventDashboard({
                 </div>
               </aside>
             </div>
+              )}
+            </>
           ) : null}
         </main>
       </div>

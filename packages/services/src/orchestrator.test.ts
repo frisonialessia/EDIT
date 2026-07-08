@@ -5,6 +5,7 @@ import {
   InvalidEventStatusError,
   VendorAlreadyAssignedError,
 } from './errors.js';
+import { createComoVillaGalaEvent } from './fixtures/como-villa-gala.js';
 import { EventOrchestrator } from './orchestrator.js';
 import {
   InMemoryEventRepository,
@@ -44,15 +45,7 @@ function createVendor(overrides: Partial<Vendor> = {}): Vendor {
 }
 
 function createEvent(overrides: Partial<Event> = {}): Event {
-  return {
-    id: asEventId('event-1'),
-    name: 'Como Villa Gala',
-    date: '2026-09-15',
-    status: 'draft',
-    client: createClient(),
-    vendors: [],
-    ...overrides,
-  };
+  return createComoVillaGalaEvent({ status: 'draft', pendingProposals: [], ...overrides });
 }
 
 describe('EventOrchestrator.assignVendorToEvent', () => {

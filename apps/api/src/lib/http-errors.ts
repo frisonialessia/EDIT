@@ -1,9 +1,10 @@
-import type { EventId, VendorId } from '@edit-os/core';
+import type { EventId, VendorId, WorkflowProposalId } from '@edit-os/core';
 import {
   EventNotFoundError,
   InvalidEventStatusError,
   VendorAlreadyAssignedError,
   VendorNotFoundError,
+  WorkflowProposalNotFoundError,
 } from '@edit-os/services';
 import type { Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
@@ -45,6 +46,13 @@ export function mapDomainErrorToHttp(error: unknown): {
     };
   }
 
+  if (error instanceof WorkflowProposalNotFoundError) {
+    return {
+      status: 404,
+      body: { error: error.message, code: 'PROPOSAL_NOT_FOUND' },
+    };
+  }
+
   return null;
 }
 
@@ -63,4 +71,8 @@ export function asEventId(value: string): EventId {
 
 export function asVendorId(value: string): VendorId {
   return value as VendorId;
+}
+
+export function asProposalId(value: string): WorkflowProposalId {
+  return value as WorkflowProposalId;
 }

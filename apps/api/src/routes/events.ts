@@ -1,6 +1,11 @@
 import { Hono } from 'hono';
 import type { AppContainer } from '../lib/container.js';
-import { asEventId, asVendorId, respondWithDomainError } from '../lib/http-errors.js';
+import {
+  asEventId,
+  asProposalId,
+  asVendorId,
+  respondWithDomainError,
+} from '../lib/http-errors.js';
 
 interface AssignVendorBody {
   vendorId?: string;
@@ -38,6 +43,54 @@ export function createEventsRouter(container: AppContainer): Hono {
         asVendorId(body.vendorId),
       );
 
+      return c.json(event, 200);
+    } catch (error) {
+      const response = respondWithDomainError(c, error);
+      if (response) {
+        return response;
+      }
+
+      throw error;
+    }
+  });
+
+  router.post('/:eventId/evaluate', async (c) => {
+    try {
+      const event = await container.domino.evaluateEvent(asEventId(c.req.param('eventId')));
+      return c.json(event, 200);
+    } catch (error) {
+      const response = respondWithDomainError(c, error);
+      if (response) {
+        return response;
+      }
+
+      throw error;
+    }
+  });
+
+  router.post('/:eventId/proposals/:proposalId/approve', async (c) => {
+    try {
+      const event = await container.domino.approveProposal(
+        asEventId(c.req.param('eventId')),
+        asProposalId(c.req.param('proposalId')),
+      );
+      return c.json(event, 200);
+    } catch (error) {
+      const response = respondWithDomainError(c, error);
+      if (response) {
+        return response;
+      }
+
+      throw error;
+    }
+  });
+
+  router.post('/:eventId/proposals/:proposalId/reject', async (c) => {
+    try {
+      const event = await container.domino.rejectProposal(
+        asEventId(c.req.param('eventId')),
+        asProposalId(c.req.param('proposalId')),
+      );
       return c.json(event, 200);
     } catch (error) {
       const response = respondWithDomainError(c, error);

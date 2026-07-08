@@ -45,3 +45,29 @@ export async function assignVendorToEvent(
 
   return parseResponse<Event>(response);
 }
+
+export async function evaluateEvent(eventId: string): Promise<Event> {
+  const response = await fetch(`${API_BASE}/events/${eventId}/evaluate`, {
+    method: 'POST',
+  });
+
+  return parseResponse<Event>(response);
+}
+
+export async function approveProposal(eventId: string, proposalId: string): Promise<Event> {
+  const response = await fetch(
+    `${API_BASE}/events/${eventId}/proposals/${proposalId}/approve`,
+    { method: 'POST' },
+  );
+
+  return parseResponse<Event>(response);
+}
+
+export async function rejectProposal(eventId: string, proposalId: string): Promise<Event> {
+  const response = await fetch(
+    `${API_BASE}/events/${eventId}/proposals/${proposalId}/reject`,
+    { method: 'POST' },
+  );
+
+  return parseResponse<Event>(response);
+}
