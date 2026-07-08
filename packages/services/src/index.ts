@@ -5,6 +5,8 @@ export {
   VendorNotFoundError,
   WorkflowProposalNotFoundError,
 } from './errors.js';
+export { ActionExecutor } from './action-executor.js';
+export type { ActionExecutorDeps } from './action-executor.js';
 export { DominoOrchestrator } from './domino-orchestrator.js';
 export type { DominoOrchestratorDeps } from './domino-orchestrator.js';
 export { EventOrchestrator } from './orchestrator.js';
@@ -21,6 +23,16 @@ export {
 } from './repositories.memory.js';
 export { createDefaultSensorProviders } from './sensors/index.js';
 export type { ISensorProvider, SensorContext, SensorReading, SensorEnvConfig } from './sensors/index.js';
+export {
+  applyShiftActions,
+  cascadeShift,
+  collectTransitiveDependents,
+  findBlocksByTarget,
+  parseDelayMinutes,
+  shiftBlock,
+  timeToMinutes,
+  minutesToTime,
+} from './timeline-engine.js';
 export {
   createDefaultProfile,
   InMemoryProfileRepository,

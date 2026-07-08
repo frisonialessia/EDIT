@@ -3,6 +3,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { DominoOrchestrator } from './domino-orchestrator.js';
 import { WorkflowProposalNotFoundError } from './errors.js';
 import { createComoVillaGalaEvent, initialWeatherProposal } from './fixtures/como-villa-gala.js';
+import { InMemoryMessageRepository } from './messaging.repository.js';
 import { InMemoryEventRepository } from './repositories.memory.js';
 import { createDefaultSensorProviders } from './sensors/index.js';
 
@@ -16,12 +17,15 @@ function asProposalId(id: string): WorkflowProposalId {
 
 describe('DominoOrchestrator', () => {
   let events: InMemoryEventRepository;
+  let messages: InMemoryMessageRepository;
   let orchestrator: DominoOrchestrator;
 
   beforeEach(async () => {
     events = new InMemoryEventRepository();
+    messages = new InMemoryMessageRepository();
     orchestrator = new DominoOrchestrator({
       events,
+      messages,
       sensors: createDefaultSensorProviders(),
     });
     await events.create(createComoVillaGalaEvent());
@@ -35,7 +39,15 @@ describe('DominoOrchestrator', () => {
     expect(result.riskProfile.signals.some((s) => s.category === 'traffic')).toBe(true);
   });
 
-  it('approves a proposal and activates Plan B timeline', async () => {
+  it('does not mutate timeline during evaluate for traffic proposals', async () => {
+    const before = await events.findById(asEventId('event-1'));
+    const result = await orchestrator.evaluateEvent(asEventId('event-1'));
+
+    expect(result.timeline).toEqual(before!.timeline);
+    expect(result.pendingProposals.some((p) => p.trigger === 'traffic')).toBe(true);
+  });
+
+  it('approves a proposal, activates Plan B, executes actions, and records history', async () => {
     const result = await orchestrator.approveProposal(
       asEventId('event-1'),
       initialWeatherProposal.id,
@@ -44,6 +56,11 @@ describe('DominoOrchestrator', () => {
     expect(result.activePlan).toBe('B');
     expect(result.timeline.every((b) => b.planVariant === 'B')).toBe(true);
     expect(result.pendingProposals).toHaveLength(0);
+    expect(result.actionHistory.length).toBe(initialWeatherProposal.actions.length);
+    expect(result.actionHistory.every((r) => r.status === 'completed')).toBe(true);
+
+    const cateringMessages = await messages.listMessages(asEventId('event-1'), 'thread-catering');
+    expect(cateringMessages.some((m) => m.senderName === 'EDIT-OS Orchestrator')).toBe(true);
   });
 
   it('throws when approving a missing proposal', async () => {

@@ -17,6 +17,8 @@ export type {
 } from './timeline.js';
 export type { RiskCategory, RiskLevel, RiskProfile, RiskSignal } from './risk.js';
 export type {
+  ActionExecutionRecord,
+  ActionExecutionStatus,
   OrchestrationState,
   WorkflowAction,
   WorkflowProposal,

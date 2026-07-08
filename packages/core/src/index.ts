@@ -22,6 +22,8 @@ export type {
   Vendor,
   VendorCategory,
   VendorId,
+  ActionExecutionRecord,
+  ActionExecutionStatus,
   WorkflowAction,
   WorkflowProposal,
   WorkflowProposalId,

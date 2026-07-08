@@ -36,6 +36,16 @@ const seedMessages: Message[] = [
     sentAt: new Date(Date.now() - 1800000).toISOString(),
     isSystem: false,
   },
+  {
+    id: messageId('msg-4'),
+    eventId: comoVillaGalaIds.eventId,
+    threadId: 'thread-staff',
+    senderId: 'system',
+    senderName: 'EDIT-OS',
+    body: 'Staff coordination channel ready.',
+    sentAt: new Date(Date.now() - 900000).toISOString(),
+    isSystem: true,
+  },
 ];
 
 export interface IMessageRepository {
@@ -59,7 +69,9 @@ export class InMemoryMessageRepository implements IMessageRepository {
           title:
             message.threadId === 'thread-catering'
               ? 'Lake Como Luxury Catering'
-              : 'Luca Ferretti · DJ',
+              : message.threadId === 'thread-staff'
+                ? 'Staff coordination'
+                : 'Luca Ferretti · DJ',
           lastMessage: message.body,
           lastMessageAt: message.sentAt,
           unreadCount: message.isSystem ? 1 : 0,

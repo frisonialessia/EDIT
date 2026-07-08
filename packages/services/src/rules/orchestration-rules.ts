@@ -7,6 +7,7 @@ import type {
   WorkflowProposal,
   WorkflowProposalId,
 } from '@edit-os/core';
+import { cascadeShift, collectTransitiveDependents, findBlocksByTarget } from '../timeline-engine.js';
 import { toRiskLevel } from './risk-level.js';
 
 const WEATHER_RAIN_THRESHOLD = 60;
@@ -58,24 +59,16 @@ function buildWeatherPlanB(event: Event): ContingencyPlan {
 }
 
 function buildTrafficAdjustedTimeline(event: Event): readonly TimelineBlock[] {
-  return event.timeline.map((block) => {
-    const shouldShift =
-      block.vendorCategory === 'catering' ||
-      block.vendorCategory === 'entertainment' ||
-      block.label.toLowerCase().includes('cóctel') ||
-      block.label.toLowerCase().includes('cocktail');
+  const anchorIds = findBlocksByTarget(event.timeline, 'cóctel');
+  const ids = anchorIds.length > 0 ? anchorIds : findBlocksByTarget(event.timeline, 'cocktail');
 
-    if (!shouldShift) {
-      return block;
-    }
+  const shiftedIds = collectTransitiveDependents(event.timeline, ids);
 
-    return {
-      ...block,
-      startsAt: shiftTime(block.startsAt, 30),
-      endsAt: shiftTime(block.endsAt, 30),
-      status: 'delayed' as const,
-    };
-  });
+  return cascadeShift(event.timeline, ids, 30).map((block) =>
+    shiftedIds.has(block.id)
+      ? { ...block, planVariant: 'B' as const, status: 'delayed' as const }
+      : { ...block, planVariant: 'B' as const },
+  );
 }
 
 export function signalsFromReadings(
@@ -138,7 +131,7 @@ export function evaluateTrafficRule(
   event: Event,
   signal: RiskSignal,
   now: string,
-): { proposal: WorkflowProposal; timeline: readonly TimelineBlock[] } | null {
+): WorkflowProposal | null {
   if (signal.category !== 'traffic' || signal.value <= TRAFFIC_DELAY_THRESHOLD) {
     return null;
   }
@@ -154,7 +147,7 @@ export function evaluateTrafficRule(
   const planB: ContingencyPlan = {
     variant: 'B',
     label: 'Plan B — Retraso por tráfico Lago di Como',
-    blocks: adjustedTimeline.map((b) => ({ ...b, planVariant: 'B' as const })),
+    blocks: adjustedTimeline,
   };
 
   const actions: WorkflowAction[] = [
@@ -176,16 +169,13 @@ export function evaluateTrafficRule(
   ];
 
   return {
-    timeline: adjustedTimeline,
-    proposal: {
-      id: asProposalId(`proposal-traffic-${Date.now()}`),
-      trigger: 'traffic',
-      reason: `Retraso de ${signal.value} min en rutas de invitados — recalcular cadena de servicios.`,
-      planB,
-      actions,
-      status: 'pending',
-      createdAt: now,
-    },
+    id: asProposalId(`proposal-traffic-${Date.now()}`),
+    trigger: 'traffic',
+    reason: `Retraso de ${signal.value} min en rutas de invitados — recalcular cadena de servicios.`,
+    planB,
+    actions,
+    status: 'pending',
+    createdAt: now,
   };
 }
 

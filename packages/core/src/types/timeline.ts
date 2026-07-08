@@ -1,4 +1,4 @@
-import type { TimelineBlockId } from './ids.js';
+import type { TimelineBlockId, VendorId } from './ids.js';
 import type { VendorCategory } from './vendor.js';
 
 export type TimelineBlockStatus = 'scheduled' | 'delayed' | 'adjusted' | 'completed';
@@ -10,6 +10,9 @@ export interface TimelineBlock {
   readonly startsAt: string;
   readonly endsAt: string;
   readonly vendorCategory?: VendorCategory;
+  readonly vendorId?: VendorId;
+  readonly dependsOn?: readonly TimelineBlockId[];
+  readonly slackMinutes?: number;
   readonly status: TimelineBlockStatus;
   readonly planVariant: PlanVariant;
 }

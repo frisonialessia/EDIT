@@ -42,6 +42,8 @@ export function createDemoEvent(): Event {
         startsAt: '16:00',
         endsAt: '17:30',
         vendorCategory: 'catering',
+        vendorId: 'vendor-1' as VendorId,
+        slackMinutes: 15,
         status: 'scheduled',
         planVariant: 'A',
       },
@@ -51,6 +53,9 @@ export function createDemoEvent(): Event {
         startsAt: '18:00',
         endsAt: '19:30',
         vendorCategory: 'catering',
+        vendorId: 'vendor-1' as VendorId,
+        dependsOn: ['block-setup' as TimelineBlockId],
+        slackMinutes: 10,
         status: 'scheduled',
         planVariant: 'A',
       },
@@ -60,6 +65,7 @@ export function createDemoEvent(): Event {
         startsAt: '19:00',
         endsAt: '23:00',
         vendorCategory: 'entertainment',
+        dependsOn: ['block-cocktail' as TimelineBlockId],
         status: 'scheduled',
         planVariant: 'A',
       },
@@ -69,6 +75,8 @@ export function createDemoEvent(): Event {
         startsAt: '20:00',
         endsAt: '22:30',
         vendorCategory: 'catering',
+        vendorId: 'vendor-1' as VendorId,
+        dependsOn: ['block-cocktail' as TimelineBlockId],
         status: 'scheduled',
         planVariant: 'A',
       },
@@ -200,6 +208,7 @@ export function createDemoEvent(): Event {
         createdAt: new Date().toISOString(),
       },
     ],
+    actionHistory: [],
   };
 }
 
@@ -272,6 +281,14 @@ export const demoThreads: MessageThread[] = [
     lastMessageAt: new Date(Date.now() - 1800000).toISOString(),
     unreadCount: 1,
   },
+  {
+    id: 'thread-staff',
+    eventId: DEMO_EVENT_ID,
+    title: 'Staff coordination',
+    lastMessage: 'Staff coordination channel ready.',
+    lastMessageAt: new Date(Date.now() - 900000).toISOString(),
+    unreadCount: 0,
+  },
 ];
 
 export const demoMessages: Record<string, Message[]> = {
@@ -307,6 +324,18 @@ export const demoMessages: Record<string, Message[]> = {
       body: 'Running 20 min late due to traffic on SP583. Adjust set start?',
       sentAt: new Date(Date.now() - 1800000).toISOString(),
       isSystem: false,
+    },
+  ],
+  'thread-staff': [
+    {
+      id: 'msg-4' as MessageId,
+      eventId: DEMO_EVENT_ID,
+      threadId: 'thread-staff',
+      senderId: 'system',
+      senderName: 'EDIT-OS',
+      body: 'Staff coordination channel ready.',
+      sentAt: new Date(Date.now() - 900000).toISOString(),
+      isSystem: true,
     },
   ],
 };

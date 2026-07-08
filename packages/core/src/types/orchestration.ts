@@ -20,6 +20,15 @@ export interface WorkflowProposal {
   readonly createdAt: string;
 }
 
+export type ActionExecutionStatus = 'completed' | 'skipped' | 'failed';
+
+export interface ActionExecutionRecord {
+  readonly action: WorkflowAction;
+  readonly status: ActionExecutionStatus;
+  readonly executedAt: string;
+  readonly outcome: string;
+}
+
 export interface OrchestrationState {
   readonly activePlan: ContingencyPlan['variant'];
   readonly timeline: readonly TimelineBlock[];

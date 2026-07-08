@@ -22,6 +22,7 @@ export interface AppContainer {
 export async function createAppContainer(): Promise<AppContainer> {
   const events = new InMemoryEventRepository();
   const vendors = new InMemoryVendorRepository();
+  const messages = new InMemoryMessageRepository();
   const openWeatherApiKey = process.env['OPENWEATHER_API_KEY'];
   const googleMapsApiKey = process.env['GOOGLE_MAPS_API_KEY'];
 
@@ -32,6 +33,7 @@ export async function createAppContainer(): Promise<AppContainer> {
       ...(openWeatherApiKey ? { openWeatherApiKey } : {}),
       ...(googleMapsApiKey ? { googleMapsApiKey } : {}),
     }),
+    messages,
   });
   const profile = new InMemoryProfileRepository(
     createDefaultProfile({
@@ -39,7 +41,6 @@ export async function createAppContainer(): Promise<AppContainer> {
       googleMapsConfigured: Boolean(googleMapsApiKey),
     }),
   );
-  const messages = new InMemoryMessageRepository();
 
   await seedDemoData(events, vendors);
 

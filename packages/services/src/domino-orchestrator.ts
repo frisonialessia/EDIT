@@ -1,6 +1,8 @@
 import type { Event, EventId, RiskSignal, WorkflowProposalId } from '@edit-os/core';
+import { ActionExecutor } from './action-executor.js';
 import { EventNotFoundError } from './errors.js';
 import { WorkflowProposalNotFoundError } from './errors.js';
+import type { IMessageRepository } from './messaging.repository.js';
 import type { IEventRepository } from './repository.js';
 import {
   evaluateAmbientRule,
@@ -12,14 +14,20 @@ import {
   signalsFromReadings,
 } from './rules/orchestration-rules.js';
 import type { ISensorProvider, SensorContext } from './sensors/types.js';
+import { applyShiftActions } from './timeline-engine.js';
 
 export interface DominoOrchestratorDeps {
   readonly events: IEventRepository;
   readonly sensors: readonly ISensorProvider[];
+  readonly messages: IMessageRepository;
 }
 
 export class DominoOrchestrator {
-  constructor(private readonly deps: DominoOrchestratorDeps) {}
+  private readonly actionExecutor: ActionExecutor;
+
+  constructor(private readonly deps: DominoOrchestratorDeps) {
+    this.actionExecutor = new ActionExecutor({ messages: deps.messages });
+  }
 
   async evaluateEvent(eventId: EventId): Promise<Event> {
     const event = await this.deps.events.findById(eventId);
@@ -50,14 +58,10 @@ export class DominoOrchestrator {
         updated = { ...updated, pendingProposals: newProposals };
       }
 
-      const trafficResult = evaluateTrafficRule(updated, signal, now);
-      if (trafficResult) {
-        newProposals.push(trafficResult.proposal);
-        updated = {
-          ...updated,
-          timeline: trafficResult.timeline,
-          pendingProposals: newProposals,
-        };
+      const trafficProposal = evaluateTrafficRule(updated, signal, now);
+      if (trafficProposal) {
+        newProposals.push(trafficProposal);
+        updated = { ...updated, pendingProposals: newProposals };
       }
 
       for (const evaluate of [
@@ -88,15 +92,34 @@ export class DominoOrchestrator {
       throw new WorkflowProposalNotFoundError(eventId, proposalId);
     }
 
+    const baseTimeline =
+      proposal.planB.blocks.length > 0 ? [...proposal.planB.blocks] : [...event.timeline];
+
+    const shouldApplyShiftActions =
+      proposal.actions.some((a) => a.type === 'shift_timeline') &&
+      proposal.trigger !== 'weather' &&
+      proposal.trigger !== 'traffic';
+
+    const timeline = shouldApplyShiftActions
+      ? applyShiftActions(baseTimeline, proposal.actions)
+      : baseTimeline;
+
+    const eventWithTimeline: Event = {
+      ...event,
+      activePlan: proposal.planB.variant,
+      timeline,
+    };
+
+    const executionRecords = await this.actionExecutor.execute(eventWithTimeline, proposal.actions);
+
     const updatedProposals = event.pendingProposals.map((p) =>
       p.id === proposalId ? { ...p, status: 'approved' as const } : p,
     );
 
     return this.deps.events.update({
-      ...event,
-      activePlan: proposal.planB.variant,
-      timeline: proposal.planB.blocks,
+      ...eventWithTimeline,
       pendingProposals: updatedProposals.filter((p) => p.status === 'pending'),
+      actionHistory: [...event.actionHistory, ...executionRecords],
     });
   }
 
