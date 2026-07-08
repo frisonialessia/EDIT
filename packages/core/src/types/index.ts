@@ -22,4 +22,14 @@ export type {
   WorkflowProposal,
   WorkflowProposalStatus,
 } from './orchestration.js';
+export type {
+  BillingPlan,
+  IntegrationConfig,
+  NotificationPreferences,
+  ProfileState,
+  TeamMember,
+  UserProfile,
+  UserRole,
+} from './profile.js';
+export type { Message, MessageId, MessageThread } from './messaging.js';
 export type { Vendor, VendorCategory } from './vendor.js';

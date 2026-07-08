@@ -13,7 +13,7 @@
     "dev:web": "pnpm --filter @edit-os/web dev"
   },
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20",

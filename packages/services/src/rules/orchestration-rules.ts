@@ -188,3 +188,122 @@ export function evaluateTrafficRule(
     },
   };
 }
+
+const STAFF_DELAY_THRESHOLD = 15;
+const GUEST_FLOW_THRESHOLD = 75;
+const CONSUMPTION_THRESHOLD = 30;
+const AMBIENT_DB_THRESHOLD = 70;
+
+function buildAlertProposal(
+  event: Event,
+  trigger: RiskSignal['category'],
+  reason: string,
+  actions: WorkflowAction[],
+  now: string,
+): WorkflowProposal | null {
+  const existing = event.pendingProposals.find(
+    (p) => p.trigger === trigger && p.status === 'pending',
+  );
+  if (existing) {
+    return null;
+  }
+
+  const planB = event.contingencyPlans.find((p) => p.variant === 'B') ?? event.contingencyPlans[0];
+  if (!planB) {
+    return null;
+  }
+
+  return {
+    id: asProposalId(`proposal-${trigger}-${Date.now()}`),
+    trigger,
+    reason,
+    planB,
+    actions,
+    status: 'pending',
+    createdAt: now,
+  };
+}
+
+export function evaluateStaffRule(
+  event: Event,
+  signal: RiskSignal,
+  now: string,
+): WorkflowProposal | null {
+  if (signal.category !== 'staff' || signal.value <= STAFF_DELAY_THRESHOLD) {
+    return null;
+  }
+
+  return buildAlertProposal(
+    event,
+    'staff',
+    `Chef clave retrasado ${signal.value} min — proponer reasignación o activar suplente.`,
+    [
+      { type: 'alert_staff', target: 'kitchen', detail: 'Activar suplente de reserva.' },
+      { type: 'notify_vendor', target: 'catering', detail: 'Reasignar tareas de servicio.' },
+    ],
+    now,
+  );
+}
+
+export function evaluateGuestFlowRule(
+  event: Event,
+  signal: RiskSignal,
+  now: string,
+): WorkflowProposal | null {
+  if (signal.category !== 'guest_flow' || signal.value <= GUEST_FLOW_THRESHOLD) {
+    return null;
+  }
+
+  return buildAlertProposal(
+    event,
+    'guest_flow',
+    `Zona de cóctel al ${signal.value}% — abrir área de descanso y acelerar transición.`,
+    [
+      { type: 'alert_staff', target: 'floor', detail: 'Abrir terraza secundaria.' },
+      { type: 'shift_timeline', target: 'cena', detail: 'Adelantar transición al comedor +15 min.' },
+    ],
+    now,
+  );
+}
+
+export function evaluateConsumptionRule(
+  event: Event,
+  signal: RiskSignal,
+  now: string,
+): WorkflowProposal | null {
+  if (signal.category !== 'consumption' || signal.value <= CONSUMPTION_THRESHOLD) {
+    return null;
+  }
+
+  return buildAlertProposal(
+    event,
+    'consumption',
+    `Consumo premium +${signal.value}% — gestionar reserva de stock con precaución.`,
+    [
+      { type: 'alert_staff', target: 'bar', detail: 'Limitar pours de Nativo Vermouth.' },
+      { type: 'notify_vendor', target: 'bar', detail: 'Solicitar reserva de emergencia.' },
+    ],
+    now,
+  );
+}
+
+export function evaluateAmbientRule(
+  event: Event,
+  signal: RiskSignal,
+  now: string,
+): WorkflowProposal | null {
+  if (signal.category !== 'ambient' || signal.value <= AMBIENT_DB_THRESHOLD) {
+    return null;
+  }
+
+  return buildAlertProposal(
+    event,
+    'ambient',
+    `Nivel acústico ${signal.value} dB — ajustar perfil de iluminación y alertar técnico.`,
+    [
+      { type: 'alert_staff', target: 'tech', detail: 'Reducir volumen en zona residencial.' },
+      { type: 'activate_plan_b', target: event.id as string, detail: 'Perfil nocturno automático.' },
+    ],
+    now,
+  );
+}

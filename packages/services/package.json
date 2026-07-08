@@ -22,6 +22,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/node": "^22.15.30",
     "vitest": "^3.2.4"
   },
   "dependencies": {

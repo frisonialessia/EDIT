@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { createAppContainer } from './lib/container.js';
 import { respondWithDomainError } from './lib/http-errors.js';
 import { createEventsRouter } from './routes/events.js';
+import { createMessagesRouter, createProfileRouter } from './routes/profile.js';
 
 const PORT = Number(process.env['PORT'] ?? 3000);
 
@@ -16,6 +17,8 @@ async function main(): Promise<void> {
   app.get('/health', (c) => c.json({ status: 'ok' }));
 
   app.route('/events', createEventsRouter(container));
+  app.route('/profile', createProfileRouter(container));
+  app.route('/messages', createMessagesRouter(container));
 
   app.onError((error, c) => {
     const response = respondWithDomainError(c, error);

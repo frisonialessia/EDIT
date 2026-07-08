@@ -1,4 +1,4 @@
-import type { Event } from '@edit-os/core';
+import type { Event, Message, MessageThread, ProfileState } from '@edit-os/core';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -70,4 +70,46 @@ export async function rejectProposal(eventId: string, proposalId: string): Promi
   );
 
   return parseResponse<Event>(response);
+}
+
+export async function fetchProfile(): Promise<ProfileState> {
+  const response = await fetch(`${API_BASE}/profile`);
+  return parseResponse<ProfileState>(response);
+}
+
+export async function updateProfile(partial: Partial<ProfileState>): Promise<ProfileState> {
+  const response = await fetch(`${API_BASE}/profile`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(partial),
+  });
+
+  return parseResponse<ProfileState>(response);
+}
+
+export async function fetchMessageThreads(eventId: string): Promise<MessageThread[]> {
+  const response = await fetch(`${API_BASE}/messages/${eventId}/threads`);
+  return parseResponse<MessageThread[]>(response);
+}
+
+export async function fetchThreadMessages(
+  eventId: string,
+  threadId: string,
+): Promise<Message[]> {
+  const response = await fetch(`${API_BASE}/messages/${eventId}/threads/${threadId}`);
+  return parseResponse<Message[]>(response);
+}
+
+export async function sendMessage(
+  eventId: string,
+  threadId: string,
+  body: string,
+): Promise<Message> {
+  const response = await fetch(`${API_BASE}/messages/${eventId}/threads/${threadId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ body }),
+  });
+
+  return parseResponse<Message>(response);
 }

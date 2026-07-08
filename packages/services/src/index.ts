@@ -20,4 +20,11 @@ export {
   InMemoryVendorRepository,
 } from './repositories.memory.js';
 export { createDefaultSensorProviders } from './sensors/index.js';
-export type { ISensorProvider, SensorContext, SensorReading } from './sensors/index.js';
+export type { ISensorProvider, SensorContext, SensorReading, SensorEnvConfig } from './sensors/index.js';
+export {
+  createDefaultProfile,
+  InMemoryProfileRepository,
+} from './profile.repository.js';
+export type { IProfileRepository } from './profile.repository.js';
+export { InMemoryMessageRepository } from './messaging.repository.js';
+export type { IMessageRepository } from './messaging.repository.js';

@@ -3,6 +3,10 @@ import { EventNotFoundError } from './errors.js';
 import { WorkflowProposalNotFoundError } from './errors.js';
 import type { IEventRepository } from './repository.js';
 import {
+  evaluateAmbientRule,
+  evaluateConsumptionRule,
+  evaluateGuestFlowRule,
+  evaluateStaffRule,
   evaluateTrafficRule,
   evaluateWeatherRule,
   signalsFromReadings,
@@ -54,6 +58,19 @@ export class DominoOrchestrator {
           timeline: trafficResult.timeline,
           pendingProposals: newProposals,
         };
+      }
+
+      for (const evaluate of [
+        evaluateStaffRule,
+        evaluateGuestFlowRule,
+        evaluateConsumptionRule,
+        evaluateAmbientRule,
+      ]) {
+        const proposal = evaluate(updated, signal, now);
+        if (proposal) {
+          newProposals.push(proposal);
+          updated = { ...updated, pendingProposals: newProposals };
+        }
       }
     }
 
