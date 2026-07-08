@@ -49,7 +49,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
           <div
             key={item.id}
             className={cn(
-              'pointer-events-auto flex items-start gap-2.5 rounded-lg border px-3.5 py-2.5 shadow-md backdrop-blur-sm',
+              'pointer-events-auto flex items-start gap-2.5 rounded-sm border px-3.5 py-2.5',
               item.variant === 'error' &&
                 'border-red-200/80 bg-white/95 text-red-900 dark:border-red-900/50 dark:bg-neutral-950/95 dark:text-red-200',
               item.variant === 'success' &&

@@ -4,21 +4,21 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:pointer-events-none disabled:opacity-40 dark:focus-visible:ring-offset-neutral-950',
+  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm border text-[12px] font-medium uppercase tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 disabled:pointer-events-none disabled:opacity-40',
   {
     variants: {
       variant: {
         default:
-          'rounded-md bg-neutral-900 text-white shadow-sm hover:bg-neutral-800 active:bg-neutral-950 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200',
+          'border-neutral-900 bg-neutral-900 text-white hover:bg-neutral-800 dark:border-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200',
         outline:
-          'rounded-md border border-neutral-200/80 bg-white text-neutral-700 shadow-sm hover:bg-neutral-50 active:bg-neutral-100 dark:border-neutral-800/80 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:bg-neutral-900',
+          'border-neutral-200 bg-transparent text-neutral-700 hover:bg-neutral-100 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900',
         ghost:
-          'rounded-md text-neutral-600 hover:bg-neutral-100 active:bg-neutral-200/80 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:active:bg-neutral-800',
+          'border-transparent text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-900',
       },
       size: {
-        default: 'h-8 px-3',
-        sm: 'h-7 rounded-md px-2.5 text-xs',
-        lg: 'h-9 rounded-md px-4',
+        default: 'h-8 px-4',
+        sm: 'h-7 px-3 text-[11px]',
+        lg: 'h-9 px-5',
       },
     },
     defaultVariants: {

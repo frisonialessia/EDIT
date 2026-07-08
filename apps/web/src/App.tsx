@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { ToastProvider } from '@/components/ui/toast';
+import { ContactPage } from '@/pages/ContactPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { CalendarView } from '@/pages/dashboard/CalendarView';
@@ -26,6 +27,7 @@ export function App(): React.JSX.Element {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage isDark={isDark} onToggleTheme={toggleTheme} />} />
+          <Route path="/contact" element={<ContactPage isDark={isDark} onToggleTheme={toggleTheme} />} />
           <Route element={<AppShell isDark={isDark} onToggleTheme={toggleTheme} />}>
             <Route path="/dashboard" element={<DashboardOverview />} />
             <Route path="/dashboard/calendar" element={<CalendarView />} />

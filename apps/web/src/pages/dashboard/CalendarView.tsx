@@ -1,18 +1,13 @@
 import type { Event, TimelineBlock } from '@edit-os/core';
 import { Fragment, useEffect, useState } from 'react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { SectionLabel } from '@/components/layout/SectionLabel';
 import { fetchEvent } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 const DEMO_EVENT_ID = 'event-1';
 const HOURS = ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
 const DAYS = ['Mon 14', 'Tue 15', 'Wed 16', 'Thu 17', 'Fri 18', 'Sat 19', 'Sun 20'];
-
-const blockColors: Record<TimelineBlock['status'], string> = {
-  scheduled: 'bg-sky-100 border-sky-200 text-sky-900 dark:bg-sky-950/40 dark:border-sky-900/50 dark:text-sky-200',
-  delayed: 'bg-amber-100 border-amber-200 text-amber-900 dark:bg-amber-950/40 dark:border-amber-900/50 dark:text-amber-200',
-  adjusted: 'bg-violet-100 border-violet-200 text-violet-900 dark:bg-violet-950/40 dark:border-violet-900/50 dark:text-violet-200',
-  completed: 'bg-emerald-100 border-emerald-200 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-200',
-};
 
 function hourIndex(time: string): number {
   const hour = Number(time.split(':')[0]);
@@ -27,29 +22,31 @@ export function CalendarView(): React.JSX.Element {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F4F4F5] dark:bg-neutral-950">
-      <header className="border-b border-neutral-200/70 bg-white/80 px-10 py-8 backdrop-blur dark:border-neutral-800/70 dark:bg-neutral-950/80">
-        <h1 className="text-[28px] font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">
-          Calendar
-        </h1>
-        <p className="mt-2 text-[13px] text-neutral-500">
-          Weekly service blocks · {event?.name ?? 'Como Villa Gala'}
-        </p>
-      </header>
+    <div className="min-h-screen bg-[#FAFAFA] dark:bg-neutral-950">
+      <PageHeader
+        eyebrow="Schedule"
+        title="Calendar"
+        description={event?.name ?? 'Como Villa Gala'}
+      />
 
-      <main className="overflow-x-auto px-6 py-8">
-        <div className="min-w-[960px] rounded-2xl border border-neutral-200/70 bg-white p-6 shadow-sm dark:border-neutral-800/70 dark:bg-neutral-950">
-          <div className="grid grid-cols-[80px_repeat(7,minmax(0,1fr))] gap-2">
-            <div />
+      <main className="overflow-x-auto px-10 py-10">
+        <div className="min-w-[960px] border border-neutral-200 dark:border-neutral-800">
+          <div className="grid grid-cols-[80px_repeat(7,minmax(0,1fr))]">
+            <div className="border-b border-neutral-200 dark:border-neutral-800" />
             {DAYS.map((day) => (
-              <div key={day} className="pb-3 text-center text-[12px] font-medium text-neutral-500">
+              <div
+                key={day}
+                className="border-b border-l border-neutral-200 py-3 text-center text-[10px] uppercase tracking-[0.14em] text-neutral-500 dark:border-neutral-800"
+              >
                 {day}
               </div>
             ))}
 
             {HOURS.map((hour, rowIndex) => (
               <Fragment key={`row-${hour}`}>
-                <div className="pr-3 text-right text-[11px] text-neutral-400">{hour}</div>
+                <div className="border-b border-neutral-200 py-4 pr-3 text-right font-mono text-[10px] text-neutral-400 dark:border-neutral-800">
+                  {hour}
+                </div>
                 {DAYS.map((day, colIndex) => {
                   const block = event?.timeline.find(
                     (b) => hourIndex(b.startsAt) === rowIndex && colIndex === 5,
@@ -58,15 +55,10 @@ export function CalendarView(): React.JSX.Element {
                   return (
                     <div
                       key={`${day}-${hour}`}
-                      className="min-h-[56px] rounded-xl border border-dashed border-neutral-100 dark:border-neutral-900"
+                      className="min-h-[52px] border-b border-l border-neutral-200 dark:border-neutral-800"
                     >
                       {block ? (
-                        <div
-                          className={cn(
-                            'm-1 rounded-xl border px-2 py-2 text-[11px] font-medium',
-                            blockColors[block.status],
-                          )}
-                        >
+                        <div className="m-px border border-neutral-300 bg-neutral-100 px-2 py-2 text-[10px] uppercase tracking-[0.08em] text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300">
                           {block.label}
                         </div>
                       ) : null}
@@ -76,6 +68,13 @@ export function CalendarView(): React.JSX.Element {
               </Fragment>
             ))}
           </div>
+        </div>
+
+        <div className="mt-10">
+          <SectionLabel>Legend</SectionLabel>
+          <p className="mt-3 text-[12px] text-neutral-500">
+            Service blocks for {event?.date ?? '2026-09-15'} · Plan {event?.activePlan ?? 'A'}
+          </p>
         </div>
       </main>
     </div>

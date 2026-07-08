@@ -1,11 +1,12 @@
 import type { NotificationPreferences, ProfileState } from '@edit-os/core';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { SectionLabel } from '@/components/layout/SectionLabel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { fetchProfile, updateProfile } from '@/lib/api';
-import { getAvatarGradient, getInitials } from '@/lib/avatar';
 import { cn } from '@/lib/utils';
 
 type ProfileTab = 'identity' | 'team' | 'notifications' | 'integrations' | 'billing';
@@ -30,8 +31,7 @@ export function ProfilePage(): React.JSX.Element {
   async function saveProfile(partial: Partial<ProfileState>): Promise<void> {
     setIsSaving(true);
     try {
-      const updated = await updateProfile(partial);
-      setProfile(updated);
+      setProfile(await updateProfile(partial));
     } finally {
       setIsSaving(false);
     }
@@ -52,31 +52,32 @@ export function ProfilePage(): React.JSX.Element {
 
   if (!profile) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F4F4F5] dark:bg-neutral-950">
-        <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA] dark:bg-neutral-950">
+        <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F4F5] dark:bg-neutral-950">
-      <header className="border-b border-neutral-200/70 bg-white/80 px-10 py-8 backdrop-blur dark:border-neutral-800/70 dark:bg-neutral-950/80">
-        <h1 className="text-[28px] font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">Profile</h1>
-        <p className="mt-2 text-[13px] text-neutral-500">Account, team, alerts, and integrations</p>
-      </header>
+    <div className="min-h-screen bg-[#FAFAFA] dark:bg-neutral-950">
+      <PageHeader
+        eyebrow="Account"
+        title="Profile"
+        description="Identity, team, alerts, integrations, and billing"
+      />
 
-      <main className="grid gap-8 px-10 py-10 lg:grid-cols-[220px_1fr]">
-        <nav className="space-y-1">
+      <main className="grid gap-0 px-10 py-10 lg:grid-cols-[200px_1fr] lg:divide-x lg:divide-neutral-200 dark:lg:divide-neutral-800">
+        <nav className="space-y-0 lg:pr-10">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex h-10 w-full items-center rounded-xl px-4 text-left text-[13px] transition-colors',
+                'flex h-9 w-full items-center border-l-2 px-3 text-left text-[12px] transition-colors',
                 activeTab === tab.id
-                  ? 'bg-white font-medium text-neutral-900 shadow-sm dark:bg-neutral-900 dark:text-neutral-100'
-                  : 'text-neutral-500 hover:bg-white/70 dark:hover:bg-neutral-900/50',
+                  ? 'border-neutral-900 font-medium text-neutral-900 dark:border-white dark:text-neutral-100'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300',
               )}
             >
               {tab.label}
@@ -84,26 +85,15 @@ export function ProfilePage(): React.JSX.Element {
           ))}
         </nav>
 
-        <section className="rounded-2xl border border-neutral-200/70 bg-white p-8 shadow-sm dark:border-neutral-800/70 dark:bg-neutral-950">
+        <section className="mt-10 lg:mt-0 lg:pl-10">
           {activeTab === 'identity' ? (
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div
-                  className={cn(
-                    'flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br text-lg font-semibold text-white',
-                    getAvatarGradient(profile.profile.id as string),
-                  )}
-                >
-                  {getInitials(profile.profile.name)}
-                </div>
-                <div>
-                  <h2 className="text-[20px] font-semibold text-neutral-900 dark:text-neutral-100">
-                    {profile.profile.name}
-                  </h2>
-                  <p className="text-[13px] text-neutral-500">{profile.profile.title}</p>
-                </div>
+            <div className="space-y-8">
+              <div>
+                <SectionLabel>Identity</SectionLabel>
+                <p className="mt-3 text-[18px] font-medium">{profile.profile.name}</p>
+                <p className="mt-1 text-[13px] text-neutral-500">{profile.profile.title}</p>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
                   <Input id="name" defaultValue={profile.profile.name} />
@@ -117,44 +107,32 @@ export function ProfilePage(): React.JSX.Element {
           ) : null}
 
           {activeTab === 'team' ? (
-            <div className="space-y-4">
+            <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
               {profile.team.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between rounded-xl border border-neutral-200/70 px-4 py-4 dark:border-neutral-800/70"
-                >
+                <div key={member.id} className="grid grid-cols-[1fr_auto] gap-4 py-4">
                   <div>
-                    <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100">{member.name}</p>
-                    <p className="text-[12px] text-neutral-500">{member.role}</p>
+                    <p className="text-[13px] font-medium">{member.name}</p>
+                    <p className="mt-1 text-[12px] text-neutral-500">{member.role}</p>
                   </div>
-                  <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] capitalize text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
-                    {member.status}
-                  </span>
+                  <span className="text-[10px] uppercase tracking-[0.12em] text-neutral-500">{member.status}</span>
                 </div>
               ))}
             </div>
           ) : null}
 
           {activeTab === 'notifications' ? (
-            <div className="space-y-3">
+            <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
               {Object.entries(profile.notifications).map(([key, enabled]) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => void toggleNotification(key as keyof NotificationPreferences)}
-                  className="flex w-full items-center justify-between rounded-xl border border-neutral-200/70 px-4 py-4 text-left dark:border-neutral-800/70"
+                  className="flex w-full items-center justify-between py-4 text-left"
                 >
                   <span className="text-[13px] capitalize text-neutral-800 dark:text-neutral-200">
                     {key.replace(/([A-Z])/g, ' $1')}
                   </span>
-                  <span
-                    className={cn(
-                      'rounded-full px-2.5 py-1 text-[11px] font-semibold',
-                      enabled
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
-                        : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-900',
-                    )}
-                  >
+                  <span className="text-[10px] uppercase tracking-[0.12em] text-neutral-500">
                     {enabled ? 'On' : 'Off'}
                   </span>
                 </button>
@@ -163,40 +141,36 @@ export function ProfilePage(): React.JSX.Element {
           ) : null}
 
           {activeTab === 'integrations' ? (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-neutral-200/70 px-4 py-4 dark:border-neutral-800/70">
-                <p className="text-[13px] font-semibold">OpenWeather</p>
-                <p className="mt-1 text-[12px] text-neutral-500">
-                  {profile.integrations.openWeatherConfigured ? 'Connected' : 'Using mock fallback'}
+            <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+              <div className="py-4">
+                <SectionLabel>OpenWeather</SectionLabel>
+                <p className="mt-2 text-[13px] text-neutral-600 dark:text-neutral-400">
+                  {profile.integrations.openWeatherConfigured ? 'Connected' : 'Mock fallback active'}
                 </p>
               </div>
-              <div className="rounded-xl border border-neutral-200/70 px-4 py-4 dark:border-neutral-800/70">
-                <p className="text-[13px] font-semibold">Google Maps Traffic</p>
-                <p className="mt-1 text-[12px] text-neutral-500">
-                  {profile.integrations.googleMapsConfigured ? 'Connected' : 'Using mock fallback'}
+              <div className="py-4">
+                <SectionLabel>Google Maps Traffic</SectionLabel>
+                <p className="mt-2 text-[13px] text-neutral-600 dark:text-neutral-400">
+                  {profile.integrations.googleMapsConfigured ? 'Connected' : 'Mock fallback active'}
                 </p>
               </div>
             </div>
           ) : null}
 
           {activeTab === 'billing' ? (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-neutral-200/70 px-4 py-4 dark:border-neutral-800/70">
-                <p className="text-[12px] uppercase tracking-[0.08em] text-neutral-400">Current plan</p>
-                <p className="mt-2 text-2xl font-semibold capitalize text-neutral-900 dark:text-neutral-100">
-                  {profile.billing.plan}
-                </p>
+            <div className="space-y-6">
+              <div>
+                <SectionLabel>Current plan</SectionLabel>
+                <p className="mt-3 text-3xl font-medium capitalize">{profile.billing.plan}</p>
               </div>
               <p className="text-[13px] text-neutral-500">
                 {profile.billing.eventsRemaining} events remaining · renews {profile.billing.renewsAt}
               </p>
-              <Button variant="outline" className="shadow-none">Manage subscription</Button>
+              <Button variant="outline">Manage subscription</Button>
             </div>
           ) : null}
 
-          {isSaving ? (
-            <p className="mt-6 text-[12px] text-neutral-500">Saving…</p>
-          ) : null}
+          {isSaving ? <p className="mt-8 text-[11px] uppercase tracking-[0.12em] text-neutral-500">Saving…</p> : null}
         </section>
       </main>
     </div>
