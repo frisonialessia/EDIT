@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b --force",
     "clean": "tsc -b --clean",
     "typecheck": "tsc -b"
   }
