@@ -8,6 +8,10 @@ export class InMemoryEventRepository implements IEventRepository {
     return this.events.get(id);
   }
 
+  async listAll(): Promise<Event[]> {
+    return [...this.events.values()];
+  }
+
   async create(event: Event): Promise<Event> {
     if (this.events.has(event.id)) {
       throw new Error(`Event already exists: ${event.id as string}`);

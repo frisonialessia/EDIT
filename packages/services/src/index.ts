@@ -40,3 +40,9 @@ export {
 export type { IProfileRepository } from './profile.repository.js';
 export { InMemoryMessageRepository } from './messaging.repository.js';
 export type { IMessageRepository } from './messaging.repository.js';
+export { DocumentService } from './document.service.js';
+export type { CreateFolderInput, RegisterDocumentInput } from './document.service.js';
+export { InMemoryDocumentRepository } from './documents.repository.js';
+export type { IDocumentRepository } from './documents.repository.js';
+export { EvaluationScheduler } from './evaluation-scheduler.js';
+export type { EvaluationSchedulerDeps } from './evaluation-scheduler.js';

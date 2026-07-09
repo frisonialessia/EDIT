@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Clock3,
   CreditCard,
+  FolderOpen,
   LayoutDashboard,
   MessageSquare,
   Moon,
@@ -33,6 +34,7 @@ const primaryNav: NavItem[] = [
   { to: '/dashboard/orchestration', label: 'Orchestration', icon: Zap },
   { to: '/dashboard/calendar', label: 'Calendar', icon: CalendarDays },
   { to: '/dashboard/timeline', label: 'Timeline', icon: Clock3 },
+  { to: '/dashboard/documents', label: 'Documents', icon: FolderOpen },
   { to: '/dashboard/messages', label: 'Messages', icon: MessageSquare, badge: 2 },
 ];
 

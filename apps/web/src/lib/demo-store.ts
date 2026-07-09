@@ -1,4 +1,7 @@
 import type { ActionExecutionRecord, Event, Message, ProfileState } from '@edit-os/core';
+import type { DocumentTreeNode } from '@edit-os/core';
+import type { WorkflowProposalId } from '@edit-os/core';
+import { appendPlanBSnapshot, getDemoDocumentTree } from './demo-documents';
 import { createDemoEvent, demoMessages, demoProfile, demoThreads } from './demo-data';
 
 function clone<T>(value: T): T {
@@ -14,6 +17,7 @@ const VENDOR_THREADS: Record<string, string> = {
 let eventState = createDemoEvent();
 let profileState = clone(demoProfile);
 const messagesState = clone(demoMessages);
+let documentTreeState = getDemoDocumentTree();
 
 function recordDemoAction(
   action: ActionExecutionRecord['action'],
@@ -82,6 +86,11 @@ export const demoStore = {
       actionHistory: [...eventState.actionHistory, ...executionRecords],
     };
 
+    if (proposal.planB.variant === 'B') {
+      appendPlanBSnapshot(eventState.id, proposal.planB.label);
+      documentTreeState = getDemoDocumentTree();
+    }
+
     return clone(eventState);
   },
 
@@ -94,7 +103,54 @@ export const demoStore = {
   },
 
   evaluateEvent(): Event {
+    const hasTrafficProposal = eventState.pendingProposals.some((p) => p.trigger === 'traffic');
+    const nextProposals = hasTrafficProposal
+      ? eventState.pendingProposals
+      : [
+          ...eventState.pendingProposals,
+          {
+            id: `proposal-traffic-${Date.now()}` as WorkflowProposalId,
+            trigger: 'traffic' as const,
+            reason: 'Retraso de 25 min en rutas de invitados — recalcular cadena de servicios.',
+            planB: eventState.contingencyPlans.find((p) => p.variant === 'B')!,
+            actions: [
+              {
+                type: 'shift_timeline' as const,
+                target: 'cóctel',
+                detail: 'Retrasar inicio del cóctel +30 min.',
+              },
+              {
+                type: 'notify_vendor' as const,
+                target: 'catering',
+                detail: 'Avisar cocina para desplazar servicio.',
+              },
+              {
+                type: 'notify_vendor' as const,
+                target: 'entertainment',
+                detail: 'Avisar DJ para ajustar set programado.',
+              },
+            ],
+            status: 'pending' as const,
+            createdAt: new Date().toISOString(),
+          },
+        ];
+
+    eventState = {
+      ...eventState,
+      pendingProposals: nextProposals,
+      riskProfile: {
+        signals: eventState.riskProfile.signals.map((signal) => ({
+          ...signal,
+          detectedAt: new Date().toISOString(),
+        })),
+      },
+    };
+
     return clone(eventState);
+  },
+
+  getDocumentTree(): DocumentTreeNode[] {
+    return clone(documentTreeState);
   },
 
   getProfile(): ProfileState {

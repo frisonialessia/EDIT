@@ -39,6 +39,11 @@ export class EventOrchestrator {
     return this.deps.events.update({
       ...event,
       vendors: [...event.vendors, vendor],
+      timeline: event.timeline.map((block) =>
+        block.vendorCategory === vendor.category && !block.vendorId
+          ? { ...block, vendorId }
+          : block,
+      ),
     });
   }
 }

@@ -7,6 +7,7 @@ import { LandingPage } from '@/pages/LandingPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { CalendarView } from '@/pages/dashboard/CalendarView';
 import { DashboardOverview } from '@/pages/dashboard/DashboardOverview';
+import { DocumentsPage } from '@/pages/dashboard/DocumentsPage';
 import { MessagesPage } from '@/pages/dashboard/MessagesPage';
 import { OrchestrationView } from '@/pages/dashboard/OrchestrationView';
 import { TimelineView } from '@/pages/dashboard/TimelineView';
@@ -34,6 +35,7 @@ export function App(): React.JSX.Element {
             <Route path="/dashboard/timeline" element={<TimelineView />} />
             <Route path="/dashboard/orchestration" element={<OrchestrationView />} />
             <Route path="/dashboard/messages" element={<MessagesPage />} />
+            <Route path="/dashboard/documents" element={<DocumentsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

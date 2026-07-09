@@ -1,4 +1,5 @@
 import type { Event, EventId, RiskSignal, WorkflowProposalId } from '@edit-os/core';
+import type { DocumentService } from './document.service.js';
 import { ActionExecutor } from './action-executor.js';
 import { EventNotFoundError } from './errors.js';
 import { WorkflowProposalNotFoundError } from './errors.js';
@@ -20,6 +21,7 @@ export interface DominoOrchestratorDeps {
   readonly events: IEventRepository;
   readonly sensors: readonly ISensorProvider[];
   readonly messages: IMessageRepository;
+  readonly documents?: DocumentService;
 }
 
 export class DominoOrchestrator {
@@ -116,11 +118,19 @@ export class DominoOrchestrator {
       p.id === proposalId ? { ...p, status: 'approved' as const } : p,
     );
 
-    return this.deps.events.update({
+    const updated = await this.deps.events.update({
       ...eventWithTimeline,
       pendingProposals: updatedProposals.filter((p) => p.status === 'pending'),
       actionHistory: [...event.actionHistory, ...executionRecords],
     });
+
+    if (this.deps.documents && proposal.planB.variant === 'B') {
+      await this.deps.documents
+        .archivePlanBSnapshot(eventId, proposal.planB.label, proposal.reason)
+        .catch(() => undefined);
+    }
+
+    return updated;
   }
 
   async rejectProposal(eventId: EventId, proposalId: WorkflowProposalId): Promise<Event> {

@@ -71,6 +71,7 @@ describe('EventOrchestrator.assignVendorToEvent', () => {
     expect(result.vendors).toHaveLength(1);
     expect(result.vendors[0]?.id).toBe(vendor.id);
     expect(result.vendors[0]?.name).toBe(vendor.name);
+    expect(result.timeline.some((block) => block.vendorId === vendor.id)).toBe(true);
   });
 
   it('throws EventNotFoundError when the event does not exist', async () => {

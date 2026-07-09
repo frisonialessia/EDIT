@@ -1,4 +1,4 @@
-import type { EventId, VendorId, WorkflowProposalId } from '@edit-os/core';
+import type { EventId, FolderId, VendorId, WorkflowProposalId } from '@edit-os/core';
 import {
   EventNotFoundError,
   InvalidEventStatusError,
@@ -75,4 +75,8 @@ export function asVendorId(value: string): VendorId {
 
 export function asProposalId(value: string): WorkflowProposalId {
   return value as WorkflowProposalId;
+}
+
+export function asFolderId(value: string): FolderId {
+  return value as FolderId;
 }

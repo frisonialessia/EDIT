@@ -4,7 +4,9 @@ export type { Event } from './event.js';
 export type { EventStatus } from './event-status.js';
 export type {
   ClientId,
+  DocumentId,
   EventId,
+  FolderId,
   TimelineBlockId,
   VendorId,
   WorkflowProposalId,
@@ -34,4 +36,11 @@ export type {
   UserRole,
 } from './profile.js';
 export type { Message, MessageId, MessageThread } from './messaging.js';
+export type {
+  DocumentTreeNode,
+  DocumentVisibility,
+  EventDocument,
+  EventFolder,
+} from './document.js';
+export type { SchedulerRunRecord, SchedulerStatus } from './scheduler.js';
 export type { Vendor, VendorCategory } from './vendor.js';

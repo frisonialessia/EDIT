@@ -38,6 +38,8 @@ export function EventTimeline({
               <p className="text-[13px] font-medium text-neutral-900 dark:text-neutral-100">{block.label}</p>
               <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-neutral-400">
                 {block.vendorCategory ?? 'general'} · Plan {block.planVariant}
+                {block.dependsOn?.length ? ` · ${block.dependsOn.length} deps` : ''}
+                {block.vendorId ? ` · ${block.vendorId as string}` : ''}
               </p>
             </div>
             <span

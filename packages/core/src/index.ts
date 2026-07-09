@@ -38,4 +38,12 @@ export type {
   Message,
   MessageId,
   MessageThread,
+  DocumentId,
+  DocumentTreeNode,
+  DocumentVisibility,
+  EventDocument,
+  EventFolder,
+  FolderId,
+  SchedulerRunRecord,
+  SchedulerStatus,
 } from './types/index.js';

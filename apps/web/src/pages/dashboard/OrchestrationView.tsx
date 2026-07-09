@@ -1,6 +1,7 @@
 import type { Event, Vendor, VendorCategory } from '@edit-os/core';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { ActionHistoryPanel } from '@/components/orchestration/ActionHistoryPanel';
 import { EventTimeline } from '@/components/orchestration/EventTimeline';
 import { RiskMonitor } from '@/components/orchestration/RiskMonitor';
 import { WorkflowProposalPanel } from '@/components/orchestration/WorkflowProposalPanel';
@@ -122,6 +123,13 @@ export function OrchestrationView(): React.JSX.Element {
                   .finally(() => setIsProposalProcessing(false));
               }}
             />
+          </div>
+        </section>
+
+        <section>
+          <SectionLabel>Action audit trail</SectionLabel>
+          <div className="mt-6">
+            <ActionHistoryPanel records={event.actionHistory} />
           </div>
         </section>
 

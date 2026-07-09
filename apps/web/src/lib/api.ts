@@ -1,4 +1,4 @@
-import type { Event, Message, MessageThread, ProfileState } from '@edit-os/core';
+import type { Event, Message, MessageThread, ProfileState, DocumentTreeNode } from '@edit-os/core';
 import { demoStore } from './demo-store';
 
 /** Sin VITE_API_URL usamos demo embebido — Vercel funciona sin backend. */
@@ -157,5 +157,12 @@ export async function sendMessage(
         }),
       ),
     () => demoStore.sendMessage(threadId, body),
+  );
+}
+
+export async function fetchDocumentTree(eventId: string): Promise<DocumentTreeNode[]> {
+  return withDemoFallback(
+    async () => parseResponse<DocumentTreeNode[]>(await fetch(`${API_BASE}/documents/${eventId}/tree`)),
+    () => demoStore.getDocumentTree(),
   );
 }
