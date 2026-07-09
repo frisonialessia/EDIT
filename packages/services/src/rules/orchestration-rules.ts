@@ -1,6 +1,7 @@
 import type {
   ContingencyPlan,
   Event,
+  PolicyThresholds,
   RiskSignal,
   TimelineBlock,
   WorkflowAction,
@@ -9,9 +10,6 @@ import type {
 } from '@edit-os/core';
 import { cascadeShift, collectTransitiveDependents, findBlocksByTarget } from '../timeline-engine.js';
 import { toRiskLevel } from './risk-level.js';
-
-const WEATHER_RAIN_THRESHOLD = 60;
-const TRAFFIC_DELAY_THRESHOLD = 20;
 
 function asProposalId(id: string): WorkflowProposalId {
   return id as WorkflowProposalId;
@@ -82,19 +80,25 @@ export function signalsFromReadings(
   }));
 }
 
+function hasPendingTrigger(event: Event, trigger: RiskSignal['category']): boolean {
+  return event.pendingProposals.some((p) => p.trigger === trigger && p.status === 'pending');
+}
+
 export function evaluateWeatherRule(
   event: Event,
   signal: RiskSignal,
   now: string,
+  thresholds: PolicyThresholds,
 ): WorkflowProposal | null {
-  if (!event.isOutdoor || signal.category !== 'weather' || signal.value <= WEATHER_RAIN_THRESHOLD) {
+  if (
+    !event.isOutdoor ||
+    signal.category !== 'weather' ||
+    signal.value <= thresholds.weather.rainProbability
+  ) {
     return null;
   }
 
-  const existing = event.pendingProposals.find(
-    (p) => p.trigger === 'weather' && p.status === 'pending',
-  );
-  if (existing) {
+  if (hasPendingTrigger(event, 'weather')) {
     return null;
   }
 
@@ -131,15 +135,13 @@ export function evaluateTrafficRule(
   event: Event,
   signal: RiskSignal,
   now: string,
+  thresholds: PolicyThresholds,
 ): WorkflowProposal | null {
-  if (signal.category !== 'traffic' || signal.value <= TRAFFIC_DELAY_THRESHOLD) {
+  if (signal.category !== 'traffic' || signal.value <= thresholds.traffic.delayMinutes) {
     return null;
   }
 
-  const existing = event.pendingProposals.find(
-    (p) => p.trigger === 'traffic' && p.status === 'pending',
-  );
-  if (existing) {
+  if (hasPendingTrigger(event, 'traffic')) {
     return null;
   }
 
@@ -179,11 +181,6 @@ export function evaluateTrafficRule(
   };
 }
 
-const STAFF_DELAY_THRESHOLD = 15;
-const GUEST_FLOW_THRESHOLD = 75;
-const CONSUMPTION_THRESHOLD = 30;
-const AMBIENT_DB_THRESHOLD = 70;
-
 function buildAlertProposal(
   event: Event,
   trigger: RiskSignal['category'],
@@ -191,10 +188,7 @@ function buildAlertProposal(
   actions: WorkflowAction[],
   now: string,
 ): WorkflowProposal | null {
-  const existing = event.pendingProposals.find(
-    (p) => p.trigger === trigger && p.status === 'pending',
-  );
-  if (existing) {
+  if (hasPendingTrigger(event, trigger)) {
     return null;
   }
 
@@ -218,8 +212,9 @@ export function evaluateStaffRule(
   event: Event,
   signal: RiskSignal,
   now: string,
+  thresholds: PolicyThresholds,
 ): WorkflowProposal | null {
-  if (signal.category !== 'staff' || signal.value <= STAFF_DELAY_THRESHOLD) {
+  if (signal.category !== 'staff' || signal.value <= thresholds.staff.delayMinutes) {
     return null;
   }
 
@@ -239,8 +234,9 @@ export function evaluateGuestFlowRule(
   event: Event,
   signal: RiskSignal,
   now: string,
+  thresholds: PolicyThresholds,
 ): WorkflowProposal | null {
-  if (signal.category !== 'guest_flow' || signal.value <= GUEST_FLOW_THRESHOLD) {
+  if (signal.category !== 'guest_flow' || signal.value <= thresholds.guest_flow.capacityPercent) {
     return null;
   }
 
@@ -260,8 +256,9 @@ export function evaluateConsumptionRule(
   event: Event,
   signal: RiskSignal,
   now: string,
+  thresholds: PolicyThresholds,
 ): WorkflowProposal | null {
-  if (signal.category !== 'consumption' || signal.value <= CONSUMPTION_THRESHOLD) {
+  if (signal.category !== 'consumption' || signal.value <= thresholds.consumption.deviationPercent) {
     return null;
   }
 
@@ -281,8 +278,9 @@ export function evaluateAmbientRule(
   event: Event,
   signal: RiskSignal,
   now: string,
+  thresholds: PolicyThresholds,
 ): WorkflowProposal | null {
-  if (signal.category !== 'ambient' || signal.value <= AMBIENT_DB_THRESHOLD) {
+  if (signal.category !== 'ambient' || signal.value <= thresholds.ambient.decibels) {
     return null;
   }
 
@@ -296,4 +294,74 @@ export function evaluateAmbientRule(
     ],
     now,
   );
+}
+
+export function evaluateCompoundRule(
+  event: Event,
+  signals: readonly RiskSignal[],
+  thresholds: PolicyThresholds,
+  now: string,
+): WorkflowProposal | null {
+  if (!event.isOutdoor || hasPendingTrigger(event, 'compound')) {
+    return null;
+  }
+
+  const weather = signals.find((s) => s.category === 'weather');
+  const traffic = signals.find((s) => s.category === 'traffic');
+
+  if (!weather || !traffic) {
+    return null;
+  }
+
+  if (
+    weather.value <= thresholds.weather.rainProbability ||
+    traffic.value <= thresholds.traffic.delayMinutes
+  ) {
+    return null;
+  }
+
+  const weatherPlanB = buildWeatherPlanB(event);
+  const trafficTimeline = buildTrafficAdjustedTimeline({
+    ...event,
+    timeline: weatherPlanB.blocks,
+  });
+
+  const planB: ContingencyPlan = {
+    variant: 'B',
+    label: 'Plan B — Crisis Tier 2 (clima + tráfico)',
+    blocks: trafficTimeline,
+  };
+
+  const actions: WorkflowAction[] = [
+    {
+      type: 'notify_vendor',
+      target: 'catering',
+      detail: 'Crisis Tier 2: activar interior + desplazar servicio por tráfico.',
+    },
+    {
+      type: 'shift_timeline',
+      target: 'montaje',
+      detail: 'Adelantar montaje 45 min y retrasar cóctel +30 min.',
+    },
+    {
+      type: 'notify_vendor',
+      target: 'entertainment',
+      detail: 'Avisar DJ para ajustar set tras retraso de invitados.',
+    },
+    {
+      type: 'activate_plan_b',
+      target: event.id as string,
+      detail: planB.label,
+    },
+  ];
+
+  return {
+    id: asProposalId(`proposal-compound-${Date.now()}`),
+    trigger: 'compound',
+    reason: `Crisis Tier 2: lluvia al ${weather.value}% y retraso de ${traffic.value} min — activación coordinada Plan B.`,
+    planB,
+    actions,
+    status: 'pending',
+    createdAt: now,
+  };
 }

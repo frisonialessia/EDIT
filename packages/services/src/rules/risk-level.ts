@@ -32,5 +32,7 @@ export function toRiskLevel(category: RiskCategory, value: number): RiskLevel {
       if (value >= 70) return 'high';
       if (value >= 55) return 'medium';
       return 'low';
+    case 'compound':
+      return 'critical';
   }
 }

@@ -1,4 +1,6 @@
 import type { Event, Message, MessageThread, ProfileState, DocumentTreeNode } from '@edit-os/core';
+import type { OrchestrationLog, OrchestrationPolicy } from '@edit-os/core';
+import { DEFAULT_AUTO_APPROVE_RULES, DEFAULT_THRESHOLDS } from '@edit-os/core';
 import { demoStore } from './demo-store';
 
 /** Sin VITE_API_URL usamos demo embebido — Vercel funciona sin backend. */
@@ -41,6 +43,12 @@ async function withDemoFallback<T>(fetcher: () => Promise<T>, fallback: () => T)
   } catch {
     return fallback();
   }
+}
+
+export interface EventPolicyResponse {
+  policy: OrchestrationPolicy;
+  logs: readonly OrchestrationLog[];
+  eventLogs: readonly OrchestrationLog[];
 }
 
 export async function fetchEvent(eventId: string): Promise<Event> {
@@ -98,6 +106,13 @@ export async function rejectProposal(eventId: string, proposalId: string): Promi
         }),
       ),
     () => demoStore.rejectProposal(proposalId),
+  );
+}
+
+export async function fetchEventPolicies(eventId: string): Promise<EventPolicyResponse> {
+  return withDemoFallback(
+    async () => parseResponse<EventPolicyResponse>(await fetch(`${API_BASE}/events/${eventId}/policies`)),
+    () => demoStore.getPolicies(),
   );
 }
 
@@ -166,3 +181,8 @@ export async function fetchDocumentTree(eventId: string): Promise<DocumentTreeNo
     () => demoStore.getDocumentTree(),
   );
 }
+
+export const demoPolicyDefaults = {
+  thresholds: DEFAULT_THRESHOLDS,
+  autoApproveRules: DEFAULT_AUTO_APPROVE_RULES,
+};

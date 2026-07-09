@@ -237,6 +237,7 @@ export function createComoVillaGalaEvent(overrides: Partial<Event> = {}): Event 
     },
     pendingProposals: [initialWeatherProposal],
     actionHistory: [],
+    orchestrationLogs: [],
     ...overrides,
   };
 }

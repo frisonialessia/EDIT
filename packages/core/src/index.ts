@@ -46,4 +46,11 @@ export type {
   FolderId,
   SchedulerRunRecord,
   SchedulerStatus,
+  AutoApproveRule,
+  OrchestrationDecision,
+  OrchestrationLog,
+  OrchestrationPolicy,
+  PolicyProposalContext,
+  PolicyThresholds,
 } from './types/index.js';
+export { DEFAULT_AUTO_APPROVE_RULES, DEFAULT_THRESHOLDS } from './policy-defaults.js';

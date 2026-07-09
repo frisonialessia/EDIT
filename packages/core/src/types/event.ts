@@ -4,6 +4,7 @@ import type { EventId } from './ids.js';
 import type { ContingencyPlan, TimelineBlock } from './timeline.js';
 import type { RiskProfile } from './risk.js';
 import type { ActionExecutionRecord, WorkflowProposal } from './orchestration.js';
+import type { OrchestrationLog } from './policy.js';
 import type { Vendor } from './vendor.js';
 
 export interface Event {
@@ -22,4 +23,5 @@ export interface Event {
   readonly pendingProposals: readonly WorkflowProposal[];
   readonly activePlan: 'A' | 'B';
   readonly actionHistory: readonly ActionExecutionRecord[];
+  readonly orchestrationLogs: readonly OrchestrationLog[];
 }

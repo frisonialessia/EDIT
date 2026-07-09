@@ -209,6 +209,7 @@ export function createDemoEvent(): Event {
       },
     ],
     actionHistory: [],
+    orchestrationLogs: [],
   };
 }
 

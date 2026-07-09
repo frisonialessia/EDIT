@@ -44,3 +44,11 @@ export type {
 } from './document.js';
 export type { SchedulerRunRecord, SchedulerStatus } from './scheduler.js';
 export type { Vendor, VendorCategory } from './vendor.js';
+export type {
+  AutoApproveRule,
+  OrchestrationDecision,
+  OrchestrationLog,
+  OrchestrationPolicy,
+  PolicyProposalContext,
+  PolicyThresholds,
+} from './policy.js';

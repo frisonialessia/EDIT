@@ -1,5 +1,5 @@
-import type { Event, Vendor, VendorCategory } from '@edit-os/core';
-import { Loader2, RefreshCw } from 'lucide-react';
+import type { Event, OrchestrationPolicy, Vendor, VendorCategory } from '@edit-os/core';
+import { Loader2, RefreshCw, Shield } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { ActionHistoryPanel } from '@/components/orchestration/ActionHistoryPanel';
 import { EventTimeline } from '@/components/orchestration/EventTimeline';
@@ -12,6 +12,7 @@ import {
   approveProposal,
   evaluateEvent,
   fetchEvent,
+  fetchEventPolicies,
   rejectProposal,
 } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -40,8 +41,39 @@ function VendorRow({ vendor }: { vendor: Vendor }): React.JSX.Element {
   );
 }
 
+function PolicySummary({ policy }: { policy: OrchestrationPolicy }): React.JSX.Element {
+  const enabledRules = policy.autoApproveRules.filter((rule) => rule.enabled);
+
+  return (
+    <div className="border border-neutral-200 dark:border-neutral-800">
+      <div className="border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
+        <div className="flex items-center gap-2">
+          <Shield className="h-3.5 w-3.5 text-neutral-500" />
+          <SectionLabel>Auto-approve policy</SectionLabel>
+        </div>
+        <p className="mt-2 text-[12px] text-neutral-500">
+          Crisis compuesta activa cuando lluvia &gt; {policy.thresholds.weather.rainProbability}% y tráfico &gt;{' '}
+          {policy.thresholds.traffic.delayMinutes} min.
+        </p>
+      </div>
+      <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
+        {enabledRules.map((rule) => (
+          <li key={rule.id} className="grid grid-cols-[1fr_auto] gap-4 px-5 py-4 text-[12px]">
+            <span className="text-neutral-700 dark:text-neutral-300">{rule.label}</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-neutral-500">
+              {rule.trigger}
+              {rule.minValue > 0 ? ` ≥ ${rule.minValue}` : ''}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function OrchestrationView(): React.JSX.Element {
   const [event, setEvent] = useState<Event | null>(null);
+  const [policy, setPolicy] = useState<OrchestrationPolicy | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isProposalProcessing, setIsProposalProcessing] = useState(false);
@@ -49,9 +81,15 @@ export function OrchestrationView(): React.JSX.Element {
   const loadEvent = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     try {
-      setEvent(await fetchEvent(DEMO_EVENT_ID));
+      const [nextEvent, policyResponse] = await Promise.all([
+        fetchEvent(DEMO_EVENT_ID),
+        fetchEventPolicies(DEMO_EVENT_ID),
+      ]);
+      setEvent(nextEvent);
+      setPolicy(policyResponse.policy);
     } catch {
       setEvent(null);
+      setPolicy(null);
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +120,7 @@ export function OrchestrationView(): React.JSX.Element {
       <PageHeader
         eyebrow={`${event.location} · Plan ${event.activePlan}`}
         title={event.name}
-        description="Domino orchestration · approve Plan B with one action"
+        description="Domino orchestration · policy-driven auto-approve for crisis scenarios"
         actions={
           <Button
             variant="outline"
@@ -91,7 +129,11 @@ export function OrchestrationView(): React.JSX.Element {
             onClick={() => {
               setIsEvaluating(true);
               void evaluateEvent(DEMO_EVENT_ID)
-                .then(setEvent)
+                .then(async (nextEvent) => {
+                  setEvent(nextEvent);
+                  const policyResponse = await fetchEventPolicies(DEMO_EVENT_ID);
+                  setPolicy(policyResponse.policy);
+                })
                 .finally(() => setIsEvaluating(false));
             }}
           >
@@ -102,6 +144,15 @@ export function OrchestrationView(): React.JSX.Element {
       />
 
       <main className="space-y-16 px-10 py-12">
+        {policy ? (
+          <section>
+            <SectionLabel>Policy engine</SectionLabel>
+            <div className="mt-6">
+              <PolicySummary policy={policy} />
+            </div>
+          </section>
+        ) : null}
+
         <section>
           <SectionLabel>Pending proposals</SectionLabel>
           <div className="mt-6">

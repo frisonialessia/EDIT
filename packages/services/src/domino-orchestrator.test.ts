@@ -4,6 +4,7 @@ import { DominoOrchestrator } from './domino-orchestrator.js';
 import { WorkflowProposalNotFoundError } from './errors.js';
 import { createComoVillaGalaEvent, initialWeatherProposal } from './fixtures/como-villa-gala.js';
 import { InMemoryMessageRepository } from './messaging.repository.js';
+import { PolicyEngine } from './policy-engine.js';
 import { InMemoryEventRepository } from './repositories.memory.js';
 import { createDefaultSensorProviders } from './sensors/index.js';
 
@@ -39,7 +40,26 @@ describe('DominoOrchestrator', () => {
     expect(result.riskProfile.signals.some((s) => s.category === 'traffic')).toBe(true);
   });
 
-  it('does not mutate timeline during evaluate for traffic proposals', async () => {
+  it('creates traffic proposal without auto-approve when compound conditions are not met', async () => {
+    await events.update(
+      createComoVillaGalaEvent({
+        pendingProposals: [],
+        isOutdoor: false,
+        riskProfile: {
+          signals: [
+            {
+              category: 'traffic',
+              level: 'high',
+              value: 25,
+              unit: 'min',
+              message: 'Delay',
+              detectedAt: new Date().toISOString(),
+            },
+          ],
+        },
+      }),
+    );
+
     const before = await events.findById(asEventId('event-1'));
     const result = await orchestrator.evaluateEvent(asEventId('event-1'));
 
@@ -67,5 +87,28 @@ describe('DominoOrchestrator', () => {
     await expect(
       orchestrator.approveProposal(asEventId('event-1'), asProposalId('missing')),
     ).rejects.toBeInstanceOf(WorkflowProposalNotFoundError);
+  });
+
+  it('auto-approves compound crisis proposals during evaluate', async () => {
+    const policies = new PolicyEngine();
+    const autoOrchestrator = new DominoOrchestrator({
+      events,
+      messages,
+      sensors: createDefaultSensorProviders(),
+      policies,
+    });
+
+    await events.update(
+      createComoVillaGalaEvent({
+        pendingProposals: [],
+      }),
+    );
+
+    const result = await autoOrchestrator.evaluateEvent(asEventId('event-1'));
+
+    expect(result.pendingProposals).toHaveLength(0);
+    expect(result.activePlan).toBe('B');
+    expect(result.orchestrationLogs.some((l) => l.decision === 'auto_approved')).toBe(true);
+    expect(result.actionHistory.length).toBeGreaterThan(0);
   });
 });

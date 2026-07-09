@@ -10,6 +10,7 @@ import {
   InMemoryMessageRepository,
   InMemoryProfileRepository,
   InMemoryVendorRepository,
+  PolicyEngine,
 } from '@edit-os/services';
 import { seedDemoData } from './seed.js';
 
@@ -17,6 +18,7 @@ export interface AppContainer {
   readonly orchestrator: EventOrchestrator;
   readonly domino: DominoOrchestrator;
   readonly scheduler: EvaluationScheduler;
+  readonly policies: PolicyEngine;
   readonly events: InMemoryEventRepository;
   readonly vendors: InMemoryVendorRepository;
   readonly profile: InMemoryProfileRepository;
@@ -34,6 +36,7 @@ export async function createAppContainer(): Promise<AppContainer> {
   const googleMapsApiKey = process.env['GOOGLE_MAPS_API_KEY'];
 
   const orchestrator = new EventOrchestrator({ events, vendors });
+  const policies = new PolicyEngine();
   const domino = new DominoOrchestrator({
     events,
     sensors: createDefaultSensorProviders({
@@ -42,6 +45,7 @@ export async function createAppContainer(): Promise<AppContainer> {
     }),
     messages,
     documents,
+    policies,
   });
   const scheduler = new EvaluationScheduler({
     events,
@@ -61,5 +65,5 @@ export async function createAppContainer(): Promise<AppContainer> {
     scheduler.start();
   }
 
-  return { orchestrator, domino, scheduler, events, vendors, profile, messages, documents };
+  return { orchestrator, domino, scheduler, policies, events, vendors, profile, messages, documents };
 }

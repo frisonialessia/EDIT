@@ -4,7 +4,8 @@ export type RiskCategory =
   | 'staff'
   | 'guest_flow'
   | 'consumption'
-  | 'ambient';
+  | 'ambient'
+  | 'compound';
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 

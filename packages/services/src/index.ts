@@ -46,3 +46,4 @@ export { InMemoryDocumentRepository } from './documents.repository.js';
 export type { IDocumentRepository } from './documents.repository.js';
 export { EvaluationScheduler } from './evaluation-scheduler.js';
 export type { EvaluationSchedulerDeps } from './evaluation-scheduler.js';
+export { PolicyEngine, DEFAULT_AUTO_APPROVE_RULES, DEFAULT_THRESHOLDS } from './policy-engine.js';

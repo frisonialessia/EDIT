@@ -9,6 +9,7 @@ const categoryLabels: Record<RiskCategory, string> = {
   guest_flow: 'Flujo invitados',
   consumption: 'Consumo',
   ambient: 'Ambiente',
+  compound: 'Crisis compuesta',
 };
 
 const categoryIcons: Record<RiskCategory, typeof CloudRain> = {
@@ -18,6 +19,7 @@ const categoryIcons: Record<RiskCategory, typeof CloudRain> = {
   guest_flow: Users,
   consumption: Wine,
   ambient: Gauge,
+  compound: CloudRain,
 };
 
 const levelTone: Record<RiskLevel, string> = {
